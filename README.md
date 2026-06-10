@@ -128,6 +128,34 @@ Never commit `backend/.env`. It contains local credentials and machine-specific 
 - Missing environment variables: Create `backend/.env` from `backend/.env.example` and fill required local values.
 - Incorrect PostgreSQL URL: Check username, password, host, port, and database name; create the database before using it in later phases.
 
+## Database Architecture
+
+The backend uses SQLAlchemy 2.x typed ORM models with PostgreSQL 16. Database infrastructure lives in `backend/app/db/`, while ORM entities live in `backend/app/models/`.
+
+Core decisions:
+
+- Shared base model provides `id`, `created_at`, and `updated_at` across tables for consistency.
+- Engine and session setup stay outside ORM models to keep persistence lifecycle separate from entity definitions.
+- Each ORM model has its own file to keep ownership clear as the CRM domain grows.
+- PostgreSQL enums are used for status and priority values to avoid fragile magic strings.
+- `backend/init_db.py` initializes tables explicitly; schema creation is never triggered by import side effects.
+
+Tables:
+
+- `contacts`: Stores CRM contacts and links each contact to their conversation threads.
+- `threads`: Groups related emails by conversation and tracks status and priority.
+- `emails`: Stores individual email records inside a thread.
+- `classifications`: Stores one future classification result per email.
+- `actions`: Stores future recommended or executed actions linked to emails.
+- `knowledge_chunks`: Stores knowledge-base metadata only; embeddings are added in a later phase.
+- `audit_logs`: Records system events for traceability and operational auditing.
+
+Initialize the local schema from `backend/`:
+
+```powershell
+..\venv\Scripts\python.exe init_db.py
+```
+
 ## Development Principles
 
 This project will prioritize:
