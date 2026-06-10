@@ -102,6 +102,32 @@ Planned setup steps:
 
 Detailed commands will be added once the corresponding implementation files exist.
 
+## Backend Environment
+
+Create a local backend environment file at `backend/.env` before running the API:
+
+```text
+DATABASE_URL=postgresql://postgres:password@localhost:5432/senai_crm
+GEMINI_API_KEY=your_key
+LLM_PROVIDER=gemini
+SECRET_KEY=your_secret
+APP_ENV=development
+```
+
+Never commit `backend/.env`. It contains local credentials and machine-specific configuration. Commit `backend/.env.example` instead because it documents the required variable names without exposing real secrets.
+
+## Backend Troubleshooting
+
+- `ModuleNotFoundError`: Activate the virtual environment and run commands from `backend/` when importing `app.*` modules.
+- `ImportError`: Reinstall dependencies with `..\venv\Scripts\python.exe -m pip install -r requirements.txt` from `backend/`.
+- `python-dotenv` issues: Confirm `python-dotenv` is installed and `backend/.env` exists with valid `KEY=value` lines.
+- `pydantic-settings` issues: Confirm `pydantic-settings` is installed and environment variable names match `backend/.env.example`.
+- `SQLAlchemy` issues: Verify `DATABASE_URL` starts with `postgresql://` and that PostgreSQL 16 is running.
+- Port `8000` already in use: Stop the existing process or temporarily change the port in `backend/run.py` during local debugging.
+- Virtual environment activation problems: Run `.\venv\Scripts\Activate.ps1` from the repository root and fix PowerShell policy with `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` if needed.
+- Missing environment variables: Create `backend/.env` from `backend/.env.example` and fill required local values.
+- Incorrect PostgreSQL URL: Check username, password, host, port, and database name; create the database before using it in later phases.
+
 ## Development Principles
 
 This project will prioritize:
