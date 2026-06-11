@@ -24,6 +24,9 @@ class ClassificationResponse(BaseModel):
     sentiment: str | None
     urgency: str | None
     confidence: float | None
+    human_required: bool = False
+    summary: str | None = None
+    reply_draft: str | None = None
 
 
 class EmailCreate(BaseModel):

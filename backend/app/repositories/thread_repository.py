@@ -1,8 +1,9 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.enums import Priority, Status
 from app.models.thread import Thread
+from app.models.email import Email
 
 
 class ThreadRepository:
@@ -10,7 +11,12 @@ class ThreadRepository:
         self.db = db
 
     def get_by_id(self, thread_id: int) -> Thread | None:
-        return self.db.get(Thread, thread_id)
+        statement = (
+            select(Thread)
+            .options(selectinload(Thread.emails).selectinload(Email.classification))
+            .where(Thread.id == thread_id)
+        )
+        return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_identifier(self, thread_identifier: str) -> Thread | None:
         statement = select(Thread).where(Thread.thread_identifier == thread_identifier)

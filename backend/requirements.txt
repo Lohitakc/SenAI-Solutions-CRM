@@ -10,3 +10,5 @@ alembic
 sentence-transformers
 pgvector
 httpx
+chromadb
+google-genai

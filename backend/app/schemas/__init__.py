@@ -6,6 +6,17 @@ from app.schemas.email import (
     EmailResponse,
     ThreadResponse,
 )
+from app.schemas.dashboard import DashboardSummaryResponse, InboxEmailResponse, ThreadDetailResponse
+from app.schemas.ai import (
+    AgentAnalyzeResponse,
+    AgentHistoryResponse,
+    AIClassificationResponse,
+    AIEmailRequest,
+    RagSearchRequest,
+    RagSearchResponse,
+    ReplyResponse,
+    RetrievedChunkResponse,
+)
 
 __all__ = [
     "AuditResponse",
@@ -14,4 +25,15 @@ __all__ = [
     "EmailCreate",
     "EmailResponse",
     "ThreadResponse",
+    "AgentAnalyzeResponse",
+    "AgentHistoryResponse",
+    "AIClassificationResponse",
+    "AIEmailRequest",
+    "RagSearchRequest",
+    "RagSearchResponse",
+    "ReplyResponse",
+    "RetrievedChunkResponse",
+    "DashboardSummaryResponse",
+    "InboxEmailResponse",
+    "ThreadDetailResponse",
 ]

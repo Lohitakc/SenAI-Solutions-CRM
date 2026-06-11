@@ -17,6 +17,9 @@ class Classification(Base):
     sentiment: Mapped[str | None] = mapped_column(String(100), nullable=True)
     urgency: Mapped[str | None] = mapped_column(String(100), nullable=True)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    human_required: Mapped[bool] = mapped_column(default=False, nullable=False)
+    summary: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    reply_draft: Mapped[str | None] = mapped_column(String(4000), nullable=True)
 
     email: Mapped["Email"] = relationship(
         "Email",

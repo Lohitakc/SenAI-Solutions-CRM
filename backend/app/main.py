@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.api.ai_routes import router as ai_router
 from app.api.email_routes import router as email_router
 from app.core.exception_handlers import (
     app_error_handler,
@@ -48,6 +49,7 @@ app.add_exception_handler(SQLAlchemyError, database_error_handler)
 app.add_exception_handler(Exception, unexpected_error_handler)
 
 app.include_router(email_router, prefix="/api", tags=["Email Ingestion"])
+app.include_router(ai_router, prefix="/api", tags=["AI"])
 
 @app.get("/health", tags=["System"])
 async def health_check() -> dict[str, str]:

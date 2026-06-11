@@ -1,4 +1,5 @@
 from app.models.action import Action
+from app.models.agent_reasoning import AgentReasoning
 from app.models.audit_log import AuditLog
 from app.models.classification import Classification
 from app.models.contact import Contact
@@ -8,6 +9,7 @@ from app.models.thread import Thread
 
 __all__ = [
     "Action",
+    "AgentReasoning",
     "AuditLog",
     "Classification",
     "Contact",
