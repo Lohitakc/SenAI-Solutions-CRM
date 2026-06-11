@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
@@ -35,10 +36,20 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
             "error": {
                 "code": "validation_error",
                 "message": "Request validation failed.",
-                "details": exc.errors(),
+                "details": _json_safe_errors(exc.errors()),
             }
         },
     )
+
+
+def _json_safe_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    safe_errors: list[dict[str, Any]] = []
+    for error in errors:
+        safe_error = dict(error)
+        if "ctx" in safe_error:
+            safe_error["ctx"] = {key: str(value) for key, value in safe_error["ctx"].items()}
+        safe_errors.append(safe_error)
+    return safe_errors
 
 
 async def database_error_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:

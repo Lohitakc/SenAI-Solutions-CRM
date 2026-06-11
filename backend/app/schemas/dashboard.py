@@ -43,4 +43,9 @@ class DashboardSummaryResponse(BaseModel):
     priority_distribution: list[MetricPoint]
     daily_volume: list[MetricPoint]
     human_intervention_rate: float
+    escalation_rate: float
+    agent_confidence: float
+    top_complaint_categories: list[MetricPoint]
+    at_risk_accounts: list[dict]
+    critical_queue: list[dict]
     recent_activity: list[dict]

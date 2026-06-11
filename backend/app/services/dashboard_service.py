@@ -82,6 +82,7 @@ class DashboardService:
         open_threads = self.db.scalar(select(func.count()).select_from(Thread).where(Thread.status == Status.OPEN)) or 0
         escalations = self.db.scalar(select(func.count()).select_from(Thread).where(Thread.priority == Priority.CRITICAL)) or 0
         human_required = self.db.scalar(select(func.count()).select_from(Classification).where(Classification.human_required.is_(True))) or 0
+        average_confidence = self.db.scalar(select(func.avg(Classification.confidence))) or 0
         recent_logs = self.db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(8)).scalars().all()
         return DashboardSummaryResponse(
             total_emails=total_emails,
@@ -93,6 +94,11 @@ class DashboardService:
             priority_distribution=self._count_distribution(Thread.priority, "MEDIUM"),
             daily_volume=self._daily_volume(),
             human_intervention_rate=round((human_required / total_emails) * 100, 2) if total_emails else 0.0,
+            escalation_rate=round((escalations / total_emails) * 100, 2) if total_emails else 0.0,
+            agent_confidence=round(float(average_confidence), 2),
+            top_complaint_categories=self._top_complaint_categories(),
+            at_risk_accounts=self._at_risk_accounts(),
+            critical_queue=self._critical_queue(),
             recent_activity=[
                 {"id": log.id, "event": log.event, "details": log.details, "created_at": log.created_at.isoformat()}
                 for log in recent_logs
@@ -110,3 +116,52 @@ class DashboardService:
             .order_by(func.to_char(Email.received_at, "YYYY-MM-DD"))
         ).all()
         return [MetricPoint(name=day, value=count) for day, count in rows]
+
+    def _top_complaint_categories(self) -> list[MetricPoint]:
+        rows = self.db.execute(
+            select(Classification.category, func.count())
+            .where(Classification.sentiment == "NEGATIVE")
+            .group_by(Classification.category)
+            .order_by(func.count().desc())
+            .limit(5)
+        ).all()
+        return [MetricPoint(name=str(category or "GENERAL"), value=count) for category, count in rows]
+
+    def _critical_queue(self) -> list[dict]:
+        rows = self.db.execute(
+            select(Email)
+            .join(Thread)
+            .outerjoin(Classification)
+            .where((Thread.priority == Priority.CRITICAL) | (Classification.human_required.is_(True)))
+            .order_by(Email.received_at.desc())
+            .limit(8)
+        ).scalars().all()
+        return [
+            {
+                "id": email.id,
+                "thread_id": email.thread_id,
+                "sender": email.sender,
+                "subject": email.subject,
+                "priority": email.thread.priority.value,
+                "category": email.classification.category if email.classification else None,
+            }
+            for email in rows
+        ]
+
+    def _at_risk_accounts(self) -> list[dict]:
+        rows = self.db.execute(
+            select(Email.sender, func.count())
+            .join(Thread)
+            .where(Thread.priority.in_([Priority.HIGH, Priority.CRITICAL]))
+            .group_by(Email.sender)
+            .order_by(func.count().desc())
+            .limit(5)
+        ).all()
+        return [
+            {
+                "sender": sender,
+                "risk_events": count,
+                "domain": sender.split("@")[-1] if "@" in sender else sender,
+            }
+            for sender, count in rows
+        ]

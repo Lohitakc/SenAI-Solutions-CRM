@@ -1,0 +1,67 @@
+{
+  "contact_profiles": {
+    "enterprise.net": {
+      "vip": true,
+      "account_value": 2400000,
+      "churn_risk": "critical",
+      "subscription_tier": "Enterprise",
+      "renewal_date": "2023-12-15",
+      "assigned_account_manager": "Maya Rao",
+      "open_tickets": 3,
+      "customer_health_score": 42
+    },
+    "retail-co.com": {
+      "vip": false,
+      "account_value": 48000,
+      "churn_risk": "high",
+      "subscription_tier": "Growth",
+      "renewal_date": "2023-11-30",
+      "assigned_account_manager": "Jordan Lee",
+      "open_tickets": 2,
+      "customer_health_score": 51
+    },
+    "greenlight-npo.org": {
+      "vip": false,
+      "account_value": 12000,
+      "churn_risk": "medium",
+      "subscription_tier": "Team",
+      "renewal_date": "2024-01-20",
+      "assigned_account_manager": "Priya Shah",
+      "open_tickets": 1,
+      "customer_health_score": 76
+    },
+    "default": {
+      "vip": false,
+      "account_value": 0,
+      "churn_risk": "unknown",
+      "subscription_tier": "Unknown",
+      "renewal_date": null,
+      "assigned_account_manager": "Unassigned",
+      "open_tickets": 0,
+      "customer_health_score": 65
+    }
+  },
+  "account_status": {
+    "enterprise.net": {
+      "billing_state": "at_risk",
+      "overdue_invoices": 0,
+      "plan": "Enterprise",
+      "seat_count": 420,
+      "api_limits": "custom high-throughput"
+    },
+    "retail-co.com": {
+      "billing_state": "current",
+      "overdue_invoices": 1,
+      "plan": "Growth",
+      "seat_count": 38,
+      "api_limits": "standard"
+    },
+    "default": {
+      "billing_state": "unknown",
+      "overdue_invoices": 0,
+      "plan": "Unknown",
+      "seat_count": 0,
+      "api_limits": "unknown"
+    }
+  }
+}

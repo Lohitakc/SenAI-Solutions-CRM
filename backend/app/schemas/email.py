@@ -1,6 +1,7 @@
 from datetime import datetime
+from html import unescape
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.enums import Priority, Status
 
@@ -70,6 +71,47 @@ class EmailCreate(BaseModel):
     received_at: datetime = Field(
         examples=["2026-06-10T10:30:00Z"],
     )
+
+    @field_validator("body")
+    @classmethod
+    def normalize_body(cls, value: str) -> str:
+        normalized = unescape(value).strip()
+        if not normalized:
+            raise ValueError("Email body cannot be empty or whitespace only.")
+        return normalized[:10_000]
+
+    @field_validator("subject")
+    @classmethod
+    def normalize_subject(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = unescape(value).strip()
+        return normalized[:500] or None
+
+
+class AssessmentEmailCreate(BaseModel):
+    message_id: str = Field(min_length=1, max_length=255, examples=["msg_001"])
+    sender: EmailStr = Field(examples=["customer@example.com"])
+    subject: str | None = Field(default=None, max_length=500)
+    body: str = Field(min_length=1)
+    timestamp: datetime
+    thread_id: str = Field(min_length=1, max_length=255, examples=["thread_customer_001"])
+
+    @field_validator("body")
+    @classmethod
+    def normalize_body(cls, value: str) -> str:
+        normalized = unescape(value).strip()
+        if not normalized:
+            raise ValueError("Email body cannot be empty or whitespace only.")
+        return normalized[:10_000]
+
+    @field_validator("subject")
+    @classmethod
+    def normalize_subject(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = unescape(value).strip()
+        return normalized[:500] or None
 
 
 class EmailResponse(BaseModel):

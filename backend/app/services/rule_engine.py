@@ -28,12 +28,28 @@ class RuleEngine:
         internal_domains: tuple[str, ...] = ("senai.com",),
     ) -> None:
         self.content_rules = content_rules or (
+            Rule(keyword="ransomware", category="SECURITY", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="data breach", category="SECURITY", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="suspicious login", category="SECURITY", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="gdpr", category="COMPLIANCE", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="article 20", category="COMPLIANCE", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="cease and desist", category="LEGAL", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="lawsuit", category="LEGAL", priority=Priority.CRITICAL, urgency="CRITICAL"),
+            Rule(keyword="p0", category="SLA", priority=Priority.CRITICAL, urgency="CRITICAL"),
             Rule(keyword="legal", priority=Priority.CRITICAL, urgency="CRITICAL"),
             Rule(keyword="urgent", priority=Priority.HIGH, urgency="HIGH"),
+            Rule(keyword="sla", category="SLA", priority=Priority.HIGH, urgency="HIGH"),
+            Rule(keyword="outage", category="SLA", priority=Priority.HIGH, urgency="HIGH"),
+            Rule(keyword="bug", category="BUG_REPORT", priority=Priority.HIGH, sentiment="NEGATIVE"),
+            Rule(keyword="incorrect", category="COMPLAINT", sentiment="NEGATIVE"),
             Rule(keyword="refund", category="REFUND"),
             Rule(keyword="invoice", category="BILLING"),
+            Rule(keyword="pricing", category="PRICING"),
+            Rule(keyword="discount", category="PRICING"),
             Rule(keyword="complaint", category="COMPLAINT", sentiment="NEGATIVE"),
             Rule(keyword="cancel", category="CANCELLATION"),
+            Rule(keyword="spam", category="SPAM", priority=Priority.LOW),
+            Rule(keyword="seo", category="SPAM", priority=Priority.LOW),
             Rule(keyword="thank", category="POSITIVE", sentiment="POSITIVE"),
         )
         self.internal_domains = tuple(domain.lower() for domain in internal_domains)

@@ -28,6 +28,7 @@ class AIEmailRequest(BaseModel):
     body: str = Field(min_length=1, examples=["This is urgent. I need a refund and may escalate legally."])
     thread_history: list[str] = Field(default_factory=list)
     email_id: int | None = None
+    dry_run: bool = True
 
 
 class AIClassificationResponse(BaseModel):

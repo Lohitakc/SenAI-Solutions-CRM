@@ -1,4 +1,8 @@
 import logging
+import time
+from datetime import datetime
+from pathlib import Path
+import json
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -15,6 +19,8 @@ from app.services.exceptions import DuplicateEmailError, NotFoundError
 from app.services.rule_engine import RuleEngine
 
 logger = logging.getLogger(__name__)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_DATASET_PATH = PROJECT_ROOT / "data" / "email-data-advanced.json"
 
 
 class EmailService:
@@ -116,6 +122,42 @@ class EmailService:
             raise NotFoundError("Email not found.")
         return email
 
+    def ingest_assessment_record(self, record: dict) -> Email:
+        sender = str(record["sender"]).strip().lower()
+        timestamp = record["timestamp"]
+        received_at = timestamp if isinstance(timestamp, datetime) else datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+        payload = EmailCreate(
+            contact_email=sender,
+            contact_name=self._name_from_email(sender),
+            company=self._company_from_email(sender),
+            thread_identifier=str(record["thread_id"]),
+            message_identifier=str(record["message_id"]),
+            sender=sender,
+            subject=record.get("subject"),
+            body=str(record.get("body") or ""),
+            received_at=received_at,
+        )
+        return self.ingest_email(payload)
+
+    def replay_assessment_dataset(
+        self,
+        dataset_path: Path = DEFAULT_DATASET_PATH,
+        limit: int | None = None,
+        delay_seconds: float = 0.0,
+    ) -> dict[str, int]:
+        records = json.loads(dataset_path.read_text(encoding="utf-8"))
+        stats = {"processed": 0, "created": 0, "duplicates": 0}
+        for record in records[:limit]:
+            stats["processed"] += 1
+            try:
+                self.ingest_assessment_record(record)
+                stats["created"] += 1
+            except DuplicateEmailError:
+                stats["duplicates"] += 1
+            if delay_seconds > 0:
+                time.sleep(delay_seconds)
+        return stats
+
     def _log_error_safely(self, event: str, details: str, email_id: int | None) -> None:
         try:
             self.audit.log_event(event=event, details=details, email_id=email_id)
@@ -131,3 +173,15 @@ class EmailService:
             Priority.HIGH: 3,
             Priority.CRITICAL: 4,
         }[priority]
+
+    def _name_from_email(self, email: str) -> str | None:
+        local_part = email.split("@", maxsplit=1)[0]
+        if not local_part:
+            return None
+        return " ".join(part.capitalize() for part in local_part.replace(".", " ").replace("_", " ").split())
+
+    def _company_from_email(self, email: str) -> str | None:
+        if "@" not in email:
+            return None
+        domain = email.split("@", maxsplit=1)[1].split(".", maxsplit=1)[0]
+        return domain.replace("-", " ").title()

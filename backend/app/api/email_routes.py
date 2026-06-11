@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.email import ContactResponse, EmailCreate, EmailResponse, ThreadResponse
+from app.schemas.email import AssessmentEmailCreate, ContactResponse, EmailCreate, EmailResponse, ThreadResponse
 from app.schemas.dashboard import DashboardSummaryResponse, InboxEmailResponse, ThreadDetailResponse
 from app.services.database_health_service import DatabaseHealthService
 from app.services.dashboard_service import DashboardService
@@ -22,6 +22,29 @@ router = APIRouter()
 def ingest_email(payload: EmailCreate, db: Session = Depends(get_db)) -> EmailResponse:
     email = EmailService(db).ingest_email(payload)
     return EmailResponse.model_validate(email)
+
+
+@router.post(
+    "/ingest",
+    response_model=EmailResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest an assessment-compatible email payload",
+)
+def ingest_assessment_email(payload: AssessmentEmailCreate, db: Session = Depends(get_db)) -> EmailResponse:
+    email = EmailService(db).ingest_assessment_record(payload.model_dump())
+    return EmailResponse.model_validate(email)
+
+
+@router.post(
+    "/ingest/replay",
+    summary="Replay the provided assessment dataset",
+)
+def replay_assessment_dataset(
+    limit: int | None = None,
+    delay_seconds: float = 0.0,
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    return EmailService(db).replay_assessment_dataset(limit=limit, delay_seconds=delay_seconds)
 
 
 @router.get(

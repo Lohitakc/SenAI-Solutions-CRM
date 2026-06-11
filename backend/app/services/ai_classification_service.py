@@ -70,8 +70,9 @@ class AIClassificationService:
     def _summarize(self, request: AIEmailRequest, chunks: list[RetrievedChunkResponse]) -> str:
         context = self._context_text(chunks)
         prompt = (
-            "Summarize this CRM email in one concise sentence using only the provided context.\n"
+            "Summarize this CRM email in one concise sentence using only the provided context and thread history.\n"
             f"Subject: {request.subject}\nBody: {request.body}\nContext: {context}"
+            f"\nThread history: {self._thread_history_text(request.thread_history)}"
         )
         return self.llm_provider.generate(prompt)
 
@@ -79,19 +80,29 @@ class AIClassificationService:
         context = self._context_text(chunks)
         prompt = (
             "Draft a concise, professional customer support reply. Use only the provided CRM policy context. "
-            "Do not invent policy details.\n"
+            "Do not invent policy details. Reference the relevant policy source by name when useful. "
+            "If this is legal, ransomware, GDPR, security, or critical SLA risk, do not auto-reply; draft an internal escalation note.\n"
             f"Subject: {request.subject}\nBody: {request.body}\nContext: {context}"
+            f"\nThread history: {self._thread_history_text(request.thread_history)}"
         )
         return self.llm_provider.generate(prompt)
 
     def _context_text(self, chunks: list[RetrievedChunkResponse]) -> str:
         if not chunks:
             return "No relevant context retrieved."
-        return "\n\n".join(chunk.content for chunk in chunks)
+        return "\n\n".join(
+            f"Source: {chunk.source_file or 'unknown'} | Score: {chunk.score:.3f}\n{chunk.content}"
+            for chunk in chunks
+        )
 
     def _requires_human(self, priority: str, body: str) -> bool:
         body_lower = body.lower()
         return priority == "CRITICAL" or any(
             keyword in body_lower
-            for keyword in ("legal", "compliance", "breach", "lawsuit", "security")
+            for keyword in ("legal", "compliance", "breach", "lawsuit", "security", "ransomware", "gdpr")
         )
+
+    def _thread_history_text(self, thread_history: list[str]) -> str:
+        if not thread_history:
+            return "No previous thread history provided."
+        return "\n".join(f"{index + 1}. {item[:1000]}" for index, item in enumerate(thread_history[-10:]))
