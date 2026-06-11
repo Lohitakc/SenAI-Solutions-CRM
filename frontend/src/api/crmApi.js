@@ -5,6 +5,8 @@ export const crmApi = {
   inbox: (params) => api.get('/api/emails', { params }).then((res) => res.data),
   thread: (id) => api.get(`/api/threads/${id}/detail`).then((res) => res.data),
   contact: (id) => api.get(`/api/contacts/${id}`).then((res) => res.data),
+  customers: () => api.get('/api/customers').then((res) => res.data),
+  customerProfile: (id) => api.get(`/api/customers/${id}`).then((res) => res.data),
   classify: (payload) => api.post('/api/ai/classify', payload).then((res) => res.data),
   reply: (payload) => api.post('/api/ai/reply', payload).then((res) => res.data),
   searchKnowledge: (payload) => api.post('/api/rag/search', payload).then((res) => res.data),

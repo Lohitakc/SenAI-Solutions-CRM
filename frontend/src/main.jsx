@@ -21,6 +21,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/threads/:threadId" element={<ThreadView />} />
+          <Route path="/customers" element={<CustomerView />} />
           <Route path="/customers/:contactId" element={<CustomerView />} />
           <Route path="/ai" element={<AIAnalysis />} />
           <Route path="/knowledge" element={<KnowledgeSearch />} />

@@ -7,7 +7,7 @@ const nav = [
   ['AI Analysis', '/ai', Bot],
   ['Knowledge', '/knowledge', Search],
   ['Analytics', '/analytics', BarChart3],
-  ['Customers', '/customers/1', UserRound],
+  ['Customers', '/customers', UserRound],
   ['Settings', '/settings', Settings],
 ];
 

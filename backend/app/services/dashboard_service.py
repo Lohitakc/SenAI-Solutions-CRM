@@ -1,3 +1,6 @@
+import json
+from collections import Counter
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -6,6 +9,7 @@ from app.models.audit_log import AuditLog
 from app.models.classification import Classification
 from app.models.email import Email
 from app.models.enums import Priority, Status
+from app.models.knowledge_chunk import KnowledgeChunk
 from app.models.thread import Thread
 from app.repositories.email_repository import EmailRepository
 from app.repositories.thread_repository import ThreadRepository
@@ -96,6 +100,10 @@ class DashboardService:
             human_intervention_rate=round((human_required / total_emails) * 100, 2) if total_emails else 0.0,
             escalation_rate=round((escalations / total_emails) * 100, 2) if total_emails else 0.0,
             agent_confidence=round(float(average_confidence), 2),
+            vip_customers=sum(1 for account in self._at_risk_accounts() if account.get("vip")),
+            pending_approvals=self._pending_approvals(),
+            knowledge_retrieval_count=self.db.scalar(select(func.count()).select_from(KnowledgeChunk)) or 0,
+            most_retrieved_policy=self._most_retrieved_policy(),
             top_complaint_categories=self._top_complaint_categories(),
             at_risk_accounts=self._at_risk_accounts(),
             critical_queue=self._critical_queue(),
@@ -162,6 +170,27 @@ class DashboardService:
                 "sender": sender,
                 "risk_events": count,
                 "domain": sender.split("@")[-1] if "@" in sender else sender,
+                "vip": sender.endswith("@enterprise.net"),
             }
             for sender, count in rows
         ]
+
+    def _pending_approvals(self) -> int:
+        return self.db.scalar(
+            select(func.count())
+            .select_from(Classification)
+            .where(Classification.human_required.is_(True))
+        ) or 0
+
+    def _most_retrieved_policy(self) -> str | None:
+        rows = self.db.execute(select(AgentReasoning.retrieved_chunks).limit(200)).scalars().all()
+        counter: Counter[str] = Counter()
+        for row in rows:
+            try:
+                for chunk in json.loads(row):
+                    source = chunk.get("source_file")
+                    if source:
+                        counter[source] += 1
+            except (TypeError, ValueError, AttributeError):
+                continue
+        return counter.most_common(1)[0][0] if counter else None

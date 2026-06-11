@@ -94,6 +94,22 @@ def get_thread_detail(thread_id: int, db: Session = Depends(get_db)) -> ThreadDe
 
 
 @router.get(
+    "/customers",
+    summary="List enriched customer profiles",
+)
+def list_customers(db: Session = Depends(get_db)) -> list[dict]:
+    return QueryService(db).list_customer_profiles()
+
+
+@router.get(
+    "/customers/{contact_id}",
+    summary="Get enriched customer profile",
+)
+def get_customer_profile(contact_id: int, db: Session = Depends(get_db)) -> dict:
+    return QueryService(db).get_customer_profile(contact_id)
+
+
+@router.get(
     "/contacts/{contact_id}",
     response_model=ContactResponse,
     summary="Get a contact by ID",

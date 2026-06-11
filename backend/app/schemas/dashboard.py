@@ -45,6 +45,10 @@ class DashboardSummaryResponse(BaseModel):
     human_intervention_rate: float
     escalation_rate: float
     agent_confidence: float
+    vip_customers: int
+    pending_approvals: int
+    knowledge_retrieval_count: int
+    most_retrieved_policy: str | None
     top_complaint_categories: list[MetricPoint]
     at_risk_accounts: list[dict]
     critical_queue: list[dict]
