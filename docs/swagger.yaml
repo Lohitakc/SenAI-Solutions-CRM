@@ -1,0 +1,1322 @@
+openapi: 3.1.0
+info:
+  title: SenAI Solutions CRM API
+  description: Backend foundation for the SenAI Solutions CRM platform.
+  version: 0.1.0
+paths:
+  /api/emails/ingest:
+    post:
+      tags:
+      - Email Ingestion
+      summary: Ingest an email
+      operationId: ingest_email_api_emails_ingest_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ingest:
+    post:
+      tags:
+      - Email Ingestion
+      summary: Ingest an assessment-compatible email payload
+      operationId: ingest_assessment_email_api_ingest_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentEmailCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ingest/replay:
+    post:
+      tags:
+      - Email Ingestion
+      summary: Replay the provided assessment dataset
+      operationId: replay_assessment_dataset_api_ingest_replay_post
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Limit
+      - name: delay_seconds
+        in: query
+        required: false
+        schema:
+          type: number
+          default: 0.0
+          title: Delay Seconds
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+                title: Response Replay Assessment Dataset Api Ingest Replay Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/emails:
+    get:
+      tags:
+      - Email Ingestion
+      summary: List ingested emails for inbox views
+      operationId: list_emails_api_emails_get
+      parameters:
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      - name: priority
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Priority
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 25
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          default: received_at_desc
+          title: Sort
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InboxEmailResponse'
+                title: Response List Emails Api Emails Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/emails/{email_id}:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get an email by ID
+      operationId: get_email_api_emails__email_id__get
+      parameters:
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Email Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/threads/{thread_id}:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get a thread by ID
+      operationId: get_thread_api_threads__thread_id__get
+      parameters:
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Thread Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/threads/{thread_id}/detail:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get a full thread detail view
+      operationId: get_thread_detail_api_threads__thread_id__detail_get
+      parameters:
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Thread Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadDetailResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/customers:
+    get:
+      tags:
+      - Email Ingestion
+      summary: List enriched customer profiles
+      operationId: list_customers_api_customers_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response List Customers Api Customers Get
+  /api/customers/{contact_id}:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get enriched customer profile
+      operationId: get_customer_profile_api_customers__contact_id__get
+      parameters:
+      - name: contact_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Contact Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Customer Profile Api Customers  Contact Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/contacts/{contact_id}:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get a contact by ID
+      operationId: get_contact_api_contacts__contact_id__get
+      parameters:
+      - name: contact_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Contact Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/health/database:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Check database health
+      operationId: database_health_api_health_database_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Database Health Api Health Database Get
+  /api/analytics/summary:
+    get:
+      tags:
+      - Email Ingestion
+      summary: Get dashboard and analytics summary
+      operationId: analytics_summary_api_analytics_summary_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponse'
+  /api/emails/{email_id}/approve-reply:
+    post:
+      tags:
+      - Email Ingestion
+      summary: Approve a drafted reply recommendation
+      operationId: approve_reply_api_emails__email_id__approve_reply_post
+      parameters:
+      - name: email_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Email Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                additionalProperties: true
+              - type: 'null'
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Approve Reply Api Emails  Email Id  Approve Reply
+                  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/threads/{thread_id}/escalate:
+    post:
+      tags:
+      - Email Ingestion
+      summary: Escalate a thread for human review
+      operationId: escalate_thread_api_threads__thread_id__escalate_post
+      parameters:
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Thread Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Escalate Thread Api Threads  Thread Id  Escalate Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ai/classify:
+    post:
+      tags:
+      - AI
+      summary: Classify an email with retrieved context
+      operationId: classify_email_api_ai_classify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIEmailRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIClassificationResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/ai/reply:
+    post:
+      tags:
+      - AI
+      summary: Generate a policy-grounded reply draft
+      operationId: generate_reply_api_ai_reply_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIEmailRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplyResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/rag/search:
+    post:
+      tags:
+      - AI
+      summary: Search local knowledge-base chunks
+      operationId: search_knowledge_api_rag_search_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RagSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RagSearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/agent/analyze:
+    post:
+      tags:
+      - AI
+      summary: Analyze an email and recommend an execution plan
+      operationId: analyze_email_api_agent_analyze_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIEmailRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentAnalyzeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/agent/history/{reasoning_id}:
+    get:
+      tags:
+      - AI
+      summary: Get stored agent reasoning history
+      operationId: get_agent_history_api_agent_history__reasoning_id__get
+      parameters:
+      - name: reasoning_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Reasoning Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentHistoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      tags:
+      - System
+      summary: Health Check
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Check Health Get
+components:
+  schemas:
+    AIClassificationResponse:
+      properties:
+        category:
+          type: string
+          title: Category
+        sentiment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sentiment
+        urgency:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Urgency
+        confidence:
+          type: number
+          title: Confidence
+        human_required:
+          type: boolean
+          title: Human Required
+        summary:
+          type: string
+          title: Summary
+        reply_draft:
+          type: string
+          title: Reply Draft
+        retrieved_chunks:
+          items:
+            $ref: '#/components/schemas/RetrievedChunkResponse'
+          type: array
+          title: Retrieved Chunks
+      type: object
+      required:
+      - category
+      - sentiment
+      - urgency
+      - confidence
+      - human_required
+      - summary
+      - reply_draft
+      - retrieved_chunks
+      title: AIClassificationResponse
+    AIEmailRequest:
+      properties:
+        sender:
+          type: string
+          format: email
+          title: Sender
+          examples:
+          - customer@example.com
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+          examples:
+          - Urgent refund complaint
+        body:
+          type: string
+          minLength: 1
+          title: Body
+          examples:
+          - This is urgent. I need a refund and may escalate legally.
+        thread_history:
+          items:
+            type: string
+          type: array
+          title: Thread History
+        email_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Email Id
+        dry_run:
+          type: boolean
+          title: Dry Run
+          default: true
+      type: object
+      required:
+      - sender
+      - body
+      title: AIEmailRequest
+    AgentAnalyzeResponse:
+      properties:
+        reasoning_id:
+          type: integer
+          title: Reasoning Id
+        reasoning:
+          type: string
+          title: Reasoning
+        classification:
+          $ref: '#/components/schemas/AIClassificationResponse'
+        execution_plan:
+          items:
+            type: string
+          type: array
+          title: Execution Plan
+        escalation_required:
+          type: boolean
+          title: Escalation Required
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - reasoning_id
+      - reasoning
+      - classification
+      - execution_plan
+      - escalation_required
+      - status
+      title: AgentAnalyzeResponse
+    AgentHistoryResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Email Id
+        reasoning:
+          type: string
+          title: Reasoning
+        retrieved_chunks:
+          type: string
+          title: Retrieved Chunks
+        prompt_metadata:
+          type: string
+          title: Prompt Metadata
+        classification:
+          type: string
+          title: Classification
+        reply_draft:
+          type: string
+          title: Reply Draft
+        execution_plan:
+          type: string
+          title: Execution Plan
+        status:
+          type: string
+          title: Status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - email_id
+      - reasoning
+      - retrieved_chunks
+      - prompt_metadata
+      - classification
+      - reply_draft
+      - execution_plan
+      - status
+      - created_at
+      title: AgentHistoryResponse
+    AssessmentEmailCreate:
+      properties:
+        message_id:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Message Id
+          examples:
+          - msg_001
+        sender:
+          type: string
+          format: email
+          title: Sender
+          examples:
+          - customer@example.com
+        subject:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Subject
+        body:
+          type: string
+          minLength: 1
+          title: Body
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        thread_id:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Thread Id
+          examples:
+          - thread_customer_001
+      type: object
+      required:
+      - message_id
+      - sender
+      - body
+      - timestamp
+      - thread_id
+      title: AssessmentEmailCreate
+    ClassificationResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email_id:
+          type: integer
+          title: Email Id
+        category:
+          type: string
+          title: Category
+        sentiment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sentiment
+        urgency:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Urgency
+        confidence:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Confidence
+        human_required:
+          type: boolean
+          title: Human Required
+          default: false
+        summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Summary
+        reply_draft:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reply Draft
+      type: object
+      required:
+      - id
+      - email_id
+      - category
+      - sentiment
+      - urgency
+      - confidence
+      title: ClassificationResponse
+    ContactResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          format: email
+          title: Email
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        company:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Company
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - email
+      - name
+      - company
+      - created_at
+      title: ContactResponse
+    DashboardSummaryResponse:
+      properties:
+        total_emails:
+          type: integer
+          title: Total Emails
+        open_threads:
+          type: integer
+          title: Open Threads
+        escalations:
+          type: integer
+          title: Escalations
+        average_response_time:
+          type: string
+          title: Average Response Time
+        sentiment_distribution:
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+          type: array
+          title: Sentiment Distribution
+        category_distribution:
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+          type: array
+          title: Category Distribution
+        priority_distribution:
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+          type: array
+          title: Priority Distribution
+        daily_volume:
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+          type: array
+          title: Daily Volume
+        human_intervention_rate:
+          type: number
+          title: Human Intervention Rate
+        escalation_rate:
+          type: number
+          title: Escalation Rate
+        agent_confidence:
+          type: number
+          title: Agent Confidence
+        vip_customers:
+          type: integer
+          title: Vip Customers
+        pending_approvals:
+          type: integer
+          title: Pending Approvals
+        knowledge_retrieval_count:
+          type: integer
+          title: Knowledge Retrieval Count
+        most_retrieved_policy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Most Retrieved Policy
+        average_churn_score:
+          type: integer
+          title: Average Churn Score
+        top_complaint_categories:
+          items:
+            $ref: '#/components/schemas/MetricPoint'
+          type: array
+          title: Top Complaint Categories
+        at_risk_accounts:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: At Risk Accounts
+        critical_queue:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Critical Queue
+        recent_activity:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Recent Activity
+      type: object
+      required:
+      - total_emails
+      - open_threads
+      - escalations
+      - average_response_time
+      - sentiment_distribution
+      - category_distribution
+      - priority_distribution
+      - daily_volume
+      - human_intervention_rate
+      - escalation_rate
+      - agent_confidence
+      - vip_customers
+      - pending_approvals
+      - knowledge_retrieval_count
+      - most_retrieved_policy
+      - average_churn_score
+      - top_complaint_categories
+      - at_risk_accounts
+      - critical_queue
+      - recent_activity
+      title: DashboardSummaryResponse
+    EmailCreate:
+      properties:
+        contact_email:
+          type: string
+          format: email
+          title: Contact Email
+          examples:
+          - customer@example.com
+        contact_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Contact Name
+          examples:
+          - Asha Mehta
+        company:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Company
+          examples:
+          - Acme Corp
+        thread_identifier:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Thread Identifier
+          examples:
+          - gmail-thread-123
+        message_identifier:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Message Identifier
+          examples:
+          - message-abc-001
+        sender:
+          type: string
+          format: email
+          title: Sender
+          examples:
+          - customer@example.com
+        subject:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Subject
+          examples:
+          - Urgent refund request
+        body:
+          type: string
+          minLength: 1
+          title: Body
+          examples:
+          - This is urgent. I need a refund for my latest invoice.
+        received_at:
+          type: string
+          format: date-time
+          title: Received At
+          examples:
+          - '2026-06-10T10:30:00Z'
+      type: object
+      required:
+      - contact_email
+      - thread_identifier
+      - message_identifier
+      - sender
+      - body
+      - received_at
+      title: EmailCreate
+    EmailResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        thread_id:
+          type: integer
+          title: Thread Id
+        message_identifier:
+          type: string
+          title: Message Identifier
+        sender:
+          type: string
+          title: Sender
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+        body:
+          type: string
+          title: Body
+        received_at:
+          type: string
+          format: date-time
+          title: Received At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        classification:
+          anyOf:
+          - $ref: '#/components/schemas/ClassificationResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - thread_id
+      - message_identifier
+      - sender
+      - subject
+      - body
+      - received_at
+      - created_at
+      title: EmailResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    InboxEmailResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        thread_id:
+          type: integer
+          title: Thread Id
+        sender:
+          type: string
+          title: Sender
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+        received_at:
+          type: string
+          format: date-time
+          title: Received At
+        priority:
+          $ref: '#/components/schemas/Priority'
+        status:
+          $ref: '#/components/schemas/Status'
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+      type: object
+      required:
+      - id
+      - thread_id
+      - sender
+      - subject
+      - received_at
+      - priority
+      - status
+      - category
+      title: InboxEmailResponse
+    MetricPoint:
+      properties:
+        name:
+          type: string
+          title: Name
+        value:
+          type: integer
+          title: Value
+      type: object
+      required:
+      - name
+      - value
+      title: MetricPoint
+    Priority:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+      title: Priority
+    RagSearchRequest:
+      properties:
+        query:
+          type: string
+          minLength: 1
+          title: Query
+          examples:
+          - What is the refund policy for urgent billing disputes?
+        top_k:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Top K
+          default: 3
+        threshold:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Threshold
+          default: 0.0
+      type: object
+      required:
+      - query
+      title: RagSearchRequest
+    RagSearchResponse:
+      properties:
+        query:
+          type: string
+          title: Query
+        chunks:
+          items:
+            $ref: '#/components/schemas/RetrievedChunkResponse'
+          type: array
+          title: Chunks
+      type: object
+      required:
+      - query
+      - chunks
+      title: RagSearchResponse
+    ReplyResponse:
+      properties:
+        reply_draft:
+          type: string
+          title: Reply Draft
+        retrieved_chunks:
+          items:
+            $ref: '#/components/schemas/RetrievedChunkResponse'
+          type: array
+          title: Retrieved Chunks
+      type: object
+      required:
+      - reply_draft
+      - retrieved_chunks
+      title: ReplyResponse
+    RetrievedChunkResponse:
+      properties:
+        content:
+          type: string
+          title: Content
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        source_file:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source File
+        score:
+          type: number
+          title: Score
+        embedding_reference:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Embedding Reference
+      type: object
+      required:
+      - content
+      - title
+      - source_file
+      - score
+      - embedding_reference
+      title: RetrievedChunkResponse
+    Status:
+      type: string
+      enum:
+      - OPEN
+      - PENDING
+      - CLOSED
+      - ESCALATED
+      title: Status
+    ThreadDetailResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        thread_identifier:
+          type: string
+          title: Thread Identifier
+        contact_id:
+          type: integer
+          title: Contact Id
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        executive_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Executive Summary
+        policy_citations:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Policy Citations
+          default: []
+        emails:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Emails
+      type: object
+      required:
+      - id
+      - thread_identifier
+      - contact_id
+      - status
+      - priority
+      - emails
+      title: ThreadDetailResponse
+    ThreadResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        thread_identifier:
+          type: string
+          title: Thread Identifier
+        contact_id:
+          type: integer
+          title: Contact Id
+        status:
+          $ref: '#/components/schemas/Status'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - thread_identifier
+      - contact_id
+      - status
+      - priority
+      - created_at
+      title: ThreadResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
