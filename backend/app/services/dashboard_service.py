@@ -58,6 +58,8 @@ class DashboardService:
             contact_id=thread.contact_id,
             status=thread.status,
             priority=thread.priority,
+            executive_summary=self._executive_thread_summary(thread) if len(thread.emails) >= 5 else None,
+            policy_citations=self._thread_policy_citations(thread),
             emails=[
                 {
                     "id": email.id,
@@ -104,6 +106,7 @@ class DashboardService:
             pending_approvals=self._pending_approvals(),
             knowledge_retrieval_count=self.db.scalar(select(func.count()).select_from(KnowledgeChunk)) or 0,
             most_retrieved_policy=self._most_retrieved_policy(),
+            average_churn_score=self._average_churn_score(),
             top_complaint_categories=self._top_complaint_categories(),
             at_risk_accounts=self._at_risk_accounts(),
             critical_queue=self._critical_queue(),
@@ -171,6 +174,7 @@ class DashboardService:
                 "risk_events": count,
                 "domain": sender.split("@")[-1] if "@" in sender else sender,
                 "vip": sender.endswith("@enterprise.net"),
+                "churn_score": min(100, 35 + (count * 12) + (20 if sender.endswith("@enterprise.net") else 0)),
             }
             for sender, count in rows
         ]
@@ -194,3 +198,42 @@ class DashboardService:
             except (TypeError, ValueError, AttributeError):
                 continue
         return counter.most_common(1)[0][0] if counter else None
+
+    def _executive_thread_summary(self, thread: Thread) -> str:
+        emails = sorted(thread.emails, key=lambda email: email.received_at)
+        latest = emails[-1]
+        categories = [
+            email.classification.category
+            for email in emails
+            if email.classification is not None
+        ]
+        category_text = ", ".join(dict.fromkeys(categories[-4:])) or "general support"
+        return (
+            f"This thread contains {len(emails)} customer messages and is currently {thread.status.value.lower()} with {thread.priority.value.lower()} priority. "
+            f"The conversation centers on {category_text}, with the latest message titled \"{latest.subject or 'No subject'}\". "
+            "Recommended next step is to review the AI classification, confirm policy citations, and route any high-risk decision through human approval."
+        )
+
+    def _thread_policy_citations(self, thread: Thread) -> list[dict]:
+        citations: dict[str, dict] = {}
+        category_sources = {
+            "REFUND": "refund_policy.md",
+            "BILLING": "pricing_policy.md",
+            "PRICING": "pricing_policy.md",
+            "SLA": "sla_policy.md",
+            "COMPLIANCE": "compliance_faq.md",
+            "LEGAL": "escalation_matrix.md",
+            "SECURITY": "escalation_matrix.md",
+        }
+        for email in thread.emails:
+            category = email.classification.category if email.classification else None
+            source = category_sources.get(str(category or "").upper())
+            if source:
+                citations[source] = {"source_file": source, "reason": f"Relevant to {category} classification"}
+        return list(citations.values())
+
+    def _average_churn_score(self) -> int:
+        accounts = self._at_risk_accounts()
+        if not accounts:
+            return 0
+        return round(sum(account["churn_score"] for account in accounts) / len(accounts))

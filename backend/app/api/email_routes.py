@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -140,8 +140,13 @@ def analytics_summary(db: Session = Depends(get_db)) -> DashboardSummaryResponse
     "/emails/{email_id}/approve-reply",
     summary="Approve a drafted reply recommendation",
 )
-def approve_reply(email_id: int, db: Session = Depends(get_db)) -> dict[str, str]:
-    return ActionService(db).approve_reply(email_id)
+def approve_reply(
+    email_id: int,
+    payload: dict | None = Body(default=None),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    edited_draft = payload.get("edited_draft") if payload else None
+    return ActionService(db).approve_reply(email_id, edited_draft)
 
 
 @router.post(

@@ -25,6 +25,8 @@ class ThreadDetailResponse(BaseModel):
     contact_id: int
     status: Status
     priority: Priority
+    executive_summary: str | None = None
+    policy_citations: list[dict] = []
     emails: list[dict]
 
 
@@ -49,6 +51,7 @@ class DashboardSummaryResponse(BaseModel):
     pending_approvals: int
     knowledge_retrieval_count: int
     most_retrieved_policy: str | None
+    average_churn_score: int
     top_complaint_categories: list[MetricPoint]
     at_risk_accounts: list[dict]
     critical_queue: list[dict]

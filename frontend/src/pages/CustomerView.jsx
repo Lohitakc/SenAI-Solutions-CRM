@@ -3,6 +3,7 @@ import { crmApi } from '../api/crmApi.js';
 import { useAsync } from '../hooks/useAsync.js';
 import MetricCard from '../ui/MetricCard.jsx';
 import PageHeader from '../ui/PageHeader.jsx';
+import RiskBadge from '../ui/RiskBadge.jsx';
 import { EmptyState, ErrorState, LoadingState } from '../ui/State.jsx';
 
 export default function CustomerView() {
@@ -35,7 +36,10 @@ function CustomerCard({ customer }) {
           <h2 className="font-semibold text-slate-950">{customer.name || customer.email}</h2>
           <p className="text-sm text-slate-500">{customer.company || customer.email}</p>
         </div>
-        {profile.vip && <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">VIP</span>}
+        <div className="flex flex-wrap gap-2">
+          {profile.vip && <RiskBadge label="VIP" tone="vip" />}
+          <RiskBadge label={`Churn ${customer.churn_prediction_score ?? 0}%`} tone={(customer.churn_prediction_score ?? 0) > 70 ? 'critical' : (customer.churn_prediction_score ?? 0) > 45 ? 'high' : 'low'} />
+        </div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <MiniMetric label="Tier" value={profile.subscription_tier || 'Unknown'} />
@@ -56,14 +60,21 @@ function CustomerProfile({ contactId }) {
 
   const profile = data.profile || {};
   const account = data.account_status || {};
+  const churnScore = data.churn_prediction_score ?? 0;
   return (
     <>
-      <PageHeader title={data.name || data.email} subtitle={`${data.company || 'Customer'} · ${profile.subscription_tier || 'Unknown tier'}`} action={profile.vip && <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">VIP Customer</span>} />
-      <section className="grid gap-4 md:grid-cols-4">
+      <PageHeader title={data.name || data.email} subtitle={`${data.company || 'Customer'} · ${profile.subscription_tier || 'Unknown tier'}`} action={profile.vip && <RiskBadge label="VIP Customer" tone="vip" />} />
+      <section className="grid gap-4 md:grid-cols-5">
         <MetricCard label="Customer Health" value={profile.customer_health_score ?? '—'} />
         <MetricCard label="Churn Risk" value={profile.churn_risk || 'unknown'} />
+        <MetricCard label="Churn Prediction" value={`${churnScore}%`} />
         <MetricCard label="Account Value" value={formatCurrency(profile.account_value)} />
         <MetricCard label="Open Tickets" value={profile.open_tickets ?? 0} />
+      </section>
+      <section className="mt-6 rounded border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-950">Churn Prediction Score</h2>
+        <div className="mt-3 h-3 rounded-full bg-slate-100"><div className={`h-3 rounded-full ${churnScore > 70 ? 'bg-red-500' : churnScore > 45 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${churnScore}%` }} /></div>
+        <div className="mt-3 flex flex-wrap gap-2">{(data.churn_prediction_factors || []).map((factor) => <RiskBadge key={factor} label={factor} tone={churnScore > 70 ? 'critical' : 'high'} />)}</div>
       </section>
       <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Panel title="Account Summary">
@@ -76,9 +87,9 @@ function CustomerProfile({ contactId }) {
           <Info label="API Limits" value={account.api_limits || 'unknown'} />
         </Panel>
         <Panel title="Risk Indicators">
-          <Badge label={`Churn: ${profile.churn_risk || 'unknown'}`} tone={profile.churn_risk} />
-          <Badge label={`Billing: ${account.billing_state || 'unknown'}`} tone={account.billing_state === 'at_risk' ? 'critical' : 'medium'} />
-          <Badge label={`Health: ${profile.customer_health_score ?? '—'}`} tone={(profile.customer_health_score ?? 100) < 60 ? 'high' : 'low'} />
+          <RiskBadge label={`Churn: ${profile.churn_risk || 'unknown'}`} tone={profile.churn_risk === 'critical' ? 'critical' : 'high'} />
+          <RiskBadge label={`Billing: ${account.billing_state || 'unknown'}`} tone={account.billing_state === 'at_risk' ? 'critical' : 'low'} />
+          <RiskBadge label={`Health: ${profile.customer_health_score ?? '—'}`} tone={(profile.customer_health_score ?? 100) < 60 ? 'high' : 'low'} />
         </Panel>
       </section>
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -106,11 +117,6 @@ function Panel({ title, children }) {
 
 function Info({ label, value }) {
   return <div className="flex justify-between gap-3 border-b border-slate-100 pb-2"><span className="text-slate-500">{label}</span><span className="font-medium text-slate-900">{value}</span></div>;
-}
-
-function Badge({ label, tone }) {
-  const classes = tone === 'critical' || tone === 'high' ? 'bg-red-50 text-red-700' : tone === 'medium' || tone === 'at_risk' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700';
-  return <span className={`mr-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>{label}</span>;
 }
 
 function Timeline({ items, empty, render }) {

@@ -37,17 +37,32 @@ export default function ThreadView() {
         subtitle={`${data.status} · ${data.priority}`}
         action={<div className="flex gap-2"><button onClick={() => refreshAi()} className="rounded bg-teal-600 px-3 py-2 text-sm text-white">Refresh AI</button><button onClick={() => crmApi.escalateThread(data.id).then(reload)} className="rounded bg-red-600 px-3 py-2 text-sm text-white">Escalate</button></div>}
       />
+      {data.executive_summary && (
+        <section className="mb-4 rounded border border-blue-200 bg-blue-50 p-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <RiskBadge label="Executive Summary" tone="ai" />
+            <RiskBadge label="Dry Run: recommendations only" tone="human" />
+          </div>
+          <p className="mt-3 text-sm leading-6 text-blue-950">{data.executive_summary}</p>
+          <PolicyCitations citations={data.policy_citations || []} />
+        </section>
+      )}
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <section className="relative space-y-4 before:absolute before:bottom-0 before:left-5 before:top-0 before:w-px before:bg-slate-200">
           {data.emails.map((email) => <TimelineMessage key={email.id} email={email} onAnalyze={() => refreshAi(email)} />)}
         </section>
         <aside className="space-y-4">
-          <Panel title="AI Summary">{latest?.classification?.summary || 'Run AI analysis to generate a summary.'}</Panel>
+          <Panel title="AI Summary">
+            {latest?.classification?.summary || 'Run AI analysis to generate a summary.'}
+            <PolicyCitations citations={data.policy_citations || []} />
+          </Panel>
           <Panel title="Classification">
             {latest?.classification ? <div className="flex flex-wrap gap-2"><RiskBadge label={latest.classification.category} tone={badgeTone(latest.classification.category)} /><RiskBadge label={latest.classification.urgency || 'No urgency'} tone={latest.classification.urgency === 'CRITICAL' ? 'critical' : 'high'} /><RiskBadge label={latest.classification.human_required ? 'Human Review' : 'AI Draft'} tone={latest.classification.human_required ? 'human' : 'ai'} /></div> : 'Not classified'}
           </Panel>
+          {latest?.classification && <ConfidencePanel confidence={latest.classification.confidence || 0} />}
           <Panel title="Reply Draft">
             <p className="whitespace-pre-wrap">{latest?.classification?.reply_draft || 'No reply draft yet.'}</p>
+            <PolicyCitations citations={data.policy_citations || []} />
             {latest && <button onClick={() => crmApi.approveReply(latest.id)} className="mt-3 rounded bg-slate-900 px-3 py-2 text-sm text-white">Approve Reply</button>}
           </Panel>
           <AgentInspector result={analysis} query={latest ? `${latest.subject}\n${latest.body}` : ''} threadHistory={data.emails.map((email) => email.body)} />
@@ -89,6 +104,26 @@ function TimelineMessage({ email, onAnalyze }) {
 
 function Panel({ title, children }) {
   return <div className="rounded border border-slate-200 bg-white p-4 shadow-sm"><h2 className="mb-2 text-sm font-semibold">{title}</h2><div className="text-sm text-slate-700">{children}</div></div>;
+}
+
+function ConfidencePanel({ confidence }) {
+  const percent = Math.round(confidence * 100);
+  return (
+    <Panel title="AI Confidence">
+      <div className="h-2 rounded-full bg-slate-100"><div className={`h-2 rounded-full ${percent >= 80 ? 'bg-emerald-500' : percent >= 55 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${percent}%` }} /></div>
+      <p className="mt-2 text-sm font-medium">{percent}% confidence {percent < 55 ? '· manual review recommended' : ''}</p>
+    </Panel>
+  );
+}
+
+function PolicyCitations({ citations }) {
+  if (!citations.length) return null;
+  return (
+    <details className="mt-3 rounded bg-white/70 p-3 text-xs">
+      <summary className="cursor-pointer font-semibold text-slate-600">Policy citations used</summary>
+      <div className="mt-2 flex flex-wrap gap-2">{citations.map((citation) => <RiskBadge key={citation.source_file} label={citation.source_file} tone="ai" />)}</div>
+    </details>
+  );
 }
 
 function badgeTone(category = '') {

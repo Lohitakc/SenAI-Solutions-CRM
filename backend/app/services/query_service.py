@@ -59,6 +59,8 @@ class QueryService:
             "created_at": contact.created_at.isoformat(),
             "profile": profile,
             "account_status": account,
+            "churn_prediction_score": self._churn_prediction_score(profile, account, analyses, emails),
+            "churn_prediction_factors": self._churn_prediction_factors(profile, account, analyses, emails),
             "recent_conversations": [
                 {
                     "id": email.id,
@@ -84,3 +86,34 @@ class QueryService:
         if any(item.get("human_required") for item in analyses):
             actions.append("Review AI escalations before sending customer response.")
         return actions or ["Monitor account health and continue standard support workflow."]
+
+    def _churn_prediction_score(self, profile: dict, account: dict, analyses: list[dict], emails: list) -> int:
+        score = 20
+        if profile.get("churn_risk") == "critical":
+            score += 35
+        elif profile.get("churn_risk") == "high":
+            score += 25
+        elif profile.get("churn_risk") == "medium":
+            score += 12
+        score += max(0, 70 - int(profile.get("customer_health_score") or 70)) // 2
+        score += min(20, sum(1 for item in analyses if item.get("human_required")) * 8)
+        score += min(15, sum(1 for item in analyses if item.get("category") in {"COMPLAINT", "REFUND", "CANCELLATION", "SLA"}) * 5)
+        if account.get("billing_state") == "at_risk" or account.get("overdue_invoices"):
+            score += 10
+        if len(emails) >= 3:
+            score += 5
+        return min(100, score)
+
+    def _churn_prediction_factors(self, profile: dict, account: dict, analyses: list[dict], emails: list) -> list[str]:
+        factors: list[str] = []
+        factors.append(f"CRM churn risk is {profile.get('churn_risk', 'unknown')}.")
+        factors.append(f"Customer health score is {profile.get('customer_health_score', 'unknown')}.")
+        if any(item.get("human_required") for item in analyses):
+            factors.append("Escalation history includes human-review items.")
+        if any(item.get("category") in {"COMPLAINT", "REFUND", "CANCELLATION", "SLA"} for item in analyses):
+            factors.append("Category history includes complaint, refund, cancellation, or SLA risk.")
+        if account.get("billing_state") == "at_risk" or account.get("overdue_invoices"):
+            factors.append("Account status shows billing risk.")
+        if len(emails) >= 3:
+            factors.append("Response history includes multiple messages in the relationship.")
+        return factors

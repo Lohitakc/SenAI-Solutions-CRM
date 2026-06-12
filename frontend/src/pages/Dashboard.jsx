@@ -23,10 +23,10 @@ export default function Dashboard() {
           <CommandCard label="Critical Emails Awaiting Review" value={data.critical_queue?.length || 0} tone="critical" />
           <CommandCard label="VIP Customers Requiring Attention" value={data.vip_customers || 0} tone="vip" />
           <CommandCard label="High Churn Risk Accounts" value={data.at_risk_accounts?.length || 0} tone="high" />
+          <CommandCard label="Average Churn Score" value={`${data.average_churn_score || 0}%`} tone={(data.average_churn_score || 0) > 70 ? 'critical' : 'high'} />
           <CommandCard label="AI Auto-Resolved Today" value={Math.max((data.total_emails || 0) - (data.pending_approvals || 0), 0)} tone="ai" />
           <CommandCard label="Human Escalations Today" value={data.escalations} tone="human" />
           <CommandCard label="Most Retrieved Policy" value={data.most_retrieved_policy || 'Pending'} tone="ai" />
-          <CommandCard label="Average AI Confidence" value={data.agent_confidence} tone="low" />
           <CommandCard label="Pending Human Approvals" value={data.pending_approvals || 0} tone="human" />
         </div>
       </section>
@@ -43,6 +43,7 @@ export default function Dashboard() {
         <MetricCard label="VIP Customers" value={data.vip_customers || 0} />
         <MetricCard label="Pending Approvals" value={data.pending_approvals || 0} />
         <MetricCard label="Knowledge Chunks" value={data.knowledge_retrieval_count || 0} />
+        <MetricCard label="Avg Churn Score" value={`${data.average_churn_score || 0}%`} />
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -55,7 +56,7 @@ export default function Dashboard() {
           {(item) => <><span className="font-medium">{item.subject || 'No subject'}</span><span className="ml-2 text-slate-500">{item.priority} · {item.category || 'Unclassified'}</span></>}
         </ListCard>
         <ListCard title="At-Risk Customers" items={data.at_risk_accounts || []} empty="No at-risk accounts.">
-          {(item) => <><span className="font-medium">{item.domain}</span><span className="ml-2 text-slate-500">{item.risk_events} risk events</span>{item.vip && <span className="ml-2"><RiskBadge label="VIP" tone="vip" /></span>}</>}
+          {(item) => <><span className="font-medium">{item.domain}</span><span className="ml-2 text-slate-500">{item.risk_events} risk events · churn {item.churn_score}%</span>{item.vip && <span className="ml-2"><RiskBadge label="VIP" tone="vip" /></span>}</>}
         </ListCard>
         <ListCard title="Recent Activity" items={data.recent_activity || []} empty="No recent activity yet.">
           {(item) => <><span className="font-medium">{item.event}</span><span className="ml-2 text-slate-500">{item.details}</span></>}
